@@ -1,0 +1,61 @@
+**************************************
+**************************************
+        Sebastian Samoilescu
+            GRUPA 325CA
+            TEMA 1 PC
+**************************************
+**************************************
+
+--> Implementare temei a fost realizata in fisierle: # trie.c & trie.h -- salvarea tabelei de rutare pentru a face cautarea in O(1)
+                                                     # pareser.c & pareser.h -- logica de parsare a tablei de rutare
+                                                     # structs.h -- definitia unor structuri neceseare
+                                                     # router.c -- logica de dirijare a pachetelor in cadrul retelei
+Cautare in tabela de rutare
+---------------------------
+
+--> Cum am mentionat si mai sus cautarea in tabela de rutare o realizez in timp constant cu ajutorul algoritmului
+    longest prefix matching care foloseste o structura de tip trie
+
+--> Fiecare nod va contine adresa unui camp din tabela de rutare, sau nu, in functie daca drumul pana in nodul respectiv
+    se identifica cu si logic intre o adresa ip din tabela si masca acesteia
+
+--> Folosindu ne de faptul ca masca contine bitii de 1 consecutiv, si de faptul ca 0 & * = 0 putem sa salvam prefix & mask
+    in tabela de rutare doar pana la momentul intalnirii primului bit de 0.
+
+--> atunci cand o adresa ip este cautata, parcurgem arborele pana intr - un nod terminal(acolo unde masca a facut 0) si verificam
+    daca nodul contine sau nu adresa unei intrari a tabelei de rutare
+
+Procesul de dirijare
+--------------------
+
+--> In implementarea temei observam ca avem de aface cu doua tipuri de pachete ARP & ICMP
+
+ICMP
+-----
+--> In cazul unui pachet de tip ICMP am impmentat cautarea in tabela de routare a urmatorului nod necesar atingerii destinatiei
+    pachetului(cautarea unui now entry in trie)
+
+--> Dupa ce este gasit entry ul urmator corespunzator pachetului se incearca obtinerea mac ului corespunzator next_hop-ului in tabela arp
+    In cazul in care nu este gasit, router ul va initia un proces de broadcasting descris mai jos
+    Altfel, routerul va trimite pachetul mai departe.
+
+--> pentru a creea mesaje de tip ICMP(timeout, destionation_unreachable) am creat functia send_icmp
+    care primeste un pachet, un tip si un cod si trimite pachetul icmp corespunzator.
+
+--> pentru a trimite un pachet mai departe (implementare ttl, checksum, etc) am crat functia de forward_packet
+
+ARP
+----
+
+--> In procesul de ARP_REQUEST routerul ar trebui sa trimita mai departe in retea o cerere de broadcast pentru a afla mac -ul unei
+    adrese IP. Acest lucru l am realizat completand headerul de ethernat cu adresa sursa ca fiind adresa routerului si adresa
+    destinatie cea de broadcast(FF:FF:FF:FF:FF:FF). Cat despre campul de arp acesta va avea ca adresa mac sursa adresa routerului,
+    adresa mac destinatie(adresa necunoscuta), adresa ip sursa  pe cea a routerului, iar adresa ip destinatie adresa IP a carui mac
+    se doreste aflat.
+
+--> In cazul in care se face ARP request catre router, acesta va completa adresa mac sursa cu adresa sa specifica interfetei
+    pe care a venit pachetul si va realiza trimiterea acestuia completand restul campurilor corespunzator.
+
+--> In cazul in care routerul primeste un pachet de ARP_REPLY acesta va updata tabela de ARP cu adresa mac nou obtinuta si va incerca
+    trimiterea tuturor pachetelor ce se afla in coada.
+
